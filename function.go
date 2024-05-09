@@ -43,18 +43,29 @@ func InsertDataGame(title string,genre string,developer string,publisher string,
 	return InsertOneDoc("DataGame", "Game", gamedata )
 }
 
-func GetAllGames() (data []GameData) {
-	gem := MongoConnect("DataGame").Collection("Game")
-	filter := bson.M{}
-	cursor, err := gem.Find(context.TODO(), filter)
+func GetAllGamme() ([]GameData, error) {
+	var gem []GameData
+
+	cursor, err := MongoConnect("DataGame").Collection("games").Find(context.Background(), bson.M{})
 	if err != nil {
-		fmt.Println("GetALLData :", err)
+		return nil, fmt.Errorf("error fetching gadgets: %v", err)
 	}
-	err = cursor.All(context.TODO(), &data)
-	if err != nil {
-		fmt.Println(err)
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var gemi GameData
+		err := cursor.Decode(&gemi)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding gadget: %v", err)
+		}
+		gem = append(gem, gemi)
 	}
-	return
+
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %v", err)
+	}
+
+	return gem, nil
 }
 
 func GetGamebyID(id primitive.ObjectID) (GameData, error) {
