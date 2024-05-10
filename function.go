@@ -13,6 +13,7 @@ import (
 )
 
 var MongoString string = os.Getenv("MONGOSTRING")
+
 func MongoConnect(dbname string) (db *mongo.Database) {
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(MongoString))
 	if err != nil {
@@ -43,39 +44,27 @@ func InsertDataGame(title string,genre string,developer string,publisher string,
 	return InsertOneDoc("DataGame", "Game", gamedata )
 }
 
-func GetAllGamme() ([]GameData, error) {
-	var gem []GameData
-
-	cursor, err := MongoConnect("DataGame").Collection("games").Find(context.Background(), bson.M{})
-	if err != nil {
-		return nil, fmt.Errorf("error fetching gadgets: %v", err)
-	}
-	defer cursor.Close(context.Background())
-
-	for cursor.Next(context.Background()) {
-		var gemi GameData
-		err := cursor.Decode(&gemi)
-		if err != nil {
-			return nil, fmt.Errorf("error decoding gadget: %v", err)
-		}
-		gem = append(gem, gemi)
-	}
-
-	if err := cursor.Err(); err != nil {
-		return nil, fmt.Errorf("cursor error: %v", err)
-	}
-
-	return gem, nil
+func GetAllGames() (data []GameData) {
+    collection := MongoConnect("DataGame").Collection("game")
+    filter := bson.M{}
+    cursor, err := collection.Find(context.TODO(), filter)
+    if err != nil {
+        fmt.Println("GetAllGames: ", err)
+    }
+    err = cursor.All(context.TODO(), &data)
+    if err != nil {
+        fmt.Println(err)
+    }
+    return
 }
 
-func GetGamebyID(id primitive.ObjectID) (GameData, error) {
-    var game GameData
 
-    filter := bson.M{"_id": id}
-    err := MongoConnect("DataGame").Collection("Game").FindOne(context.Background(), filter).Decode(&game)
+func GetGamesByTitle(title string) (game GameData) {
+    collection := MongoConnect("GameData").Collection("Game")
+    filter := bson.M{"title": title}
+    err := collection.FindOne(context.TODO(), filter).Decode(&game)
     if err != nil {
-        return GameData{}, err
+        fmt.Printf("GetGamesBytitle: %v\n", err)
     }
-
-    return game, nil
+    return game
 }
