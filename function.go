@@ -32,13 +32,13 @@ func InsertOneDoc(db string, collection string, doc interface{}) (insertedID int
 	return insertResult.InsertedID
 }
 
-func InsertDataGame(title string, genre string, developer string, publisher string, realeseyear int, platform string, mode string, price float64, rating float64) (InsertedID interface{}) {
+func InsertDataGame(title string, genre string, developer string, publisher string, releaseyear int, platform string, mode string, price float64, rating float64) (InsertedID interface{}) {
 	var gamedata GameData
 	gamedata.Title = title
 	gamedata.Genre = genre
 	gamedata.Developer = developer
 	gamedata.Publisher = publisher
-	gamedata.ReleaseYear = realeseyear
+	gamedata.ReleaseYear = releaseyear
 	gamedata.Platform = platform
 	gamedata.Mode = mode
 	gamedata.Price = price
