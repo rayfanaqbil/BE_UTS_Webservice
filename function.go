@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"errors"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -30,7 +32,7 @@ func InsertOneDoc(db string, collection string, doc interface{}) (insertedID int
 	return insertResult.InsertedID
 }
 
-func InsertDataGame(title string,genre string,developer string,publisher string,realeseyear int, platform string,mode string,price float64,rating float64) (InsertedID interface{}) {
+func InsertDataGame(title string, genre string, developer string, publisher string, realeseyear int, platform string, mode string, price float64, rating float64) (InsertedID interface{}) {
 	var gamedata GameData
 	gamedata.Title = title
 	gamedata.Genre = genre
@@ -41,30 +43,42 @@ func InsertDataGame(title string,genre string,developer string,publisher string,
 	gamedata.Mode = mode
 	gamedata.Price = price
 	gamedata.Rating = rating
-	return InsertOneDoc("DataGame", "Game", gamedata )
+	return InsertOneDoc("DataGame", "game", gamedata)
 }
 
-func GetAllGames() (data []GameData) {
-    collection := MongoConnect("DataGame").Collection("game")
-    filter := bson.M{}
-    cursor, err := collection.Find(context.TODO(), filter)
-    if err != nil {
-        fmt.Println("GetAllGames: ", err)
-    }
-    err = cursor.All(context.TODO(), &data)
-    if err != nil {
-        fmt.Println(err)
-    }
-    return
+func GetAllDataGames() (data []GameData) {
+	gem := MongoConnect("DataGame").Collection("game")
+	filter := bson.M{}
+	cursor, err := gem.Find(context.TODO(), filter)
+	if err != nil {
+		fmt.Println("GetAllData: ", err)
+	}
+	err = cursor.All(context.TODO(), &data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return
 }
 
+func GetDataByTitle(title string) (games GameData) {
+	gem := MongoConnect("DataGame").Collection("game")
+	filter := bson.M{"title": title}
+	err := gem.FindOne(context.TODO(), filter).Decode(&games)
+	if err != nil {
+		fmt.Printf("getDataByTitle: %v\n", err)
+	}
+	return games
+}
 
-func GetGamesByTitle(title string) (game GameData) {
-    collection := MongoConnect("GameData").Collection("Game")
-    filter := bson.M{"title": title}
-    err := collection.FindOne(context.TODO(), filter).Decode(&game)
-    if err != nil {
-        fmt.Printf("GetGamesBytitle: %v\n", err)
-    }
-    return game
+func GetGamesID(_id primitive.ObjectID, db *mongo.Database, col string) (games GameData, errs error) {
+	gem := db.Collection(col)
+	filter := bson.M{"_id": _id}
+	err := gem.FindOne(context.TODO(), filter).Decode(&games)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return games, fmt.Errorf("no data found for ID %s", _id)
+		}
+		return games, fmt.Errorf("error retrieving data for ID %s: %s", _id, err.Error())
+	}
+	return games, nil
 }
